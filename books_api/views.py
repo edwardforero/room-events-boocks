@@ -1,11 +1,10 @@
-
+from django.core import serializers
 from rest_framework import status
 from rest_framework.permissions import BasePermission, IsAuthenticated, SAFE_METHODS
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from rooms_api.models import Rooms
 from events_api.models import Events
 from books_api.models import Books
 from books_api.serializers import BooksSerializer
@@ -20,6 +19,7 @@ class ReadOnly(BasePermission):
 
 class BooksView(viewsets.ModelViewSet):
    
+   permission_classes = [IsAuthenticated]
    queryset = Events.objects.all()
    serializer_class = BooksSerializer
    filters = {}
@@ -66,3 +66,22 @@ class BooksView(viewsets.ModelViewSet):
       self.perform_create(serializer)
       headers = self.get_success_headers(serializer.data)
       return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+   def destroy(self, request, pk=None):
+      self.get_user_data(request)
+      book_data = Books.objects.filter(pk=pk)
+      if len(book_data) == 0:
+         return Response({"error": "Book not found."}, status=status.HTTP_404_NOT_FOUND)
+      book_data = book_data[0]
+      if book_data.user.id != self.user.id:
+         return Response({"error": "This book doesn't belong to you."}, status=status.HTTP_403_FORBIDDEN)
+      book_data.delete()
+      return Response({"msg": "Book %s deleted." % pk}, status=status.HTTP_201_CREATED)
+
+
+   def update(self, request, pk=None):
+      return Response({"error": "Event can't be modified."}, status=status.HTTP_403_FORBIDDEN)
+
+   def partial_update(self, request, pk=None):
+      return Response({"error": "Event can't be modified."}, status=status.HTTP_403_FORBIDDEN)
+   

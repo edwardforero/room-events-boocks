@@ -16,8 +16,3 @@ class BooksSerializer(serializers.ModelSerializer):
       model = Books
       fields = "__all__"
    
-   def to_internal_value(self, data):
-      print(data)
-      data['user'] = '<Set Value Here>'
-      print("######")
-      return super(BooksSerializer, self).to_internal_value(data)
